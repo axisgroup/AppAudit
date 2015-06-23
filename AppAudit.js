@@ -30,7 +30,7 @@ require( ["js/qlik"], function ( qlik ) {
 
 		//creates initial blank option to be selected first in the dropdown
 		appList.append('<option value=""></option>');
-		
+
 		//create dropdown options for each item in the applist, using the value attribute as the file name
 		list.forEach(function(value) {
 			appList.append('<option value="' + value.qDocName +'">' + value.qTitle + '</option>');
@@ -57,39 +57,88 @@ function renderAudit(selectedApp) {
 		app.getList('MeasureList', function(reply) {
 			//console.log('measure reply');
 			//console.log(reply);
-			tabularize(reply.qMeasureList.qItems);
+			tabularize(reply);
 		});
 
 		app.getList('DimensionList', function(reply) {
 			//console.log('the dimension reply: ');
-			//console.log(reply);
-			tabularize(reply.qDimensionList.qItems);
+			console.log(reply);
+			tabularize(reply);
 		});
 
+		app.getList('BookmarkList', function(reply) {
+			//console.log('the dimension reply: ');
+			console.log(reply);
+			tabularize(reply);
+		});
+
+		app.getList('FieldList', function(reply) {
+			//console.log('the dimension reply: ');
+			console.log(reply);
+			tabularize(reply);
+		});
 }
 
 //accepts an array of objects and creates a table displaying measure name and id
 function tabularize(list) {
-		var html = '';
-		//var table = $('#tables').append('<table />').attr('class', 'table table-striped');
+		//get the type of list
+		var listType = list.qInfo.qType;
 
-		html += '<table class="col-lg-3 table table-striped">';
+		//use list type to create variable to hold the data array
+		var listData = list['q' + listType].qItems;
+
+		//allows for setting of the header depending on type of list passed in since FieldList is structured differently
+		var firstHeader;
+
+		var html = '';
+
+		//sets the appropriate header for first column since FieldList does not have qInfo.qType
+		if(listType !== "FieldList") {
+			if(listData.length === 0) {
+
+				//TODO find another way to remove the last four items from the array, splice was acting weird
+				var tempHeader = listType.split('');
+				tempHeader.pop();
+				tempHeader.pop();
+				tempHeader.pop();
+				tempHeader.pop();
+				tempHeader = tempHeader.join('');
+
+				firstHeader = tempHeader;
+			}
+			else firstHeader = listData[0].qInfo.qType;
+		}
+		else firstHeader = "Field";
+
+		html += '<table class="col-lg-3 col-md-6 col-xs-12 table table-striped">';
 
 		//add the header to the html variable with header labels
-		html += "<thead><tr><th>" + list[0].qInfo.qType.toUpperCase() + "</th><th>ID</th></tr></thead>";
+		html += "<thead><tr><th>" + firstHeader.toUpperCase() + "</th><th>ID</th></tr></thead>";
 
 		//add the table body
 		html += "<tbody>";
 
 		//iterate over array, and populate the table
-		$.each(list, function(index, value) {
-			html += "<tr><td>" + value.qData.title + "</td><td>" + value.qInfo.qId + "</td></tr>";
-		});
+		if(listData.length === 0){
+			html += "<tr><td>Sorry, no data of this type is present in the application</td></tr>";
+		}
+
+		//different properties need to be called on the field list object than the others
+		if(listType === "FieldList"){
+			$.each(listData, function(index, value) {
+				html += "<tr><td>" + value.qName + "</td><td>" + "N/A" + "</td></tr>";
+			});
+		//Since field list is different, everything else will go down this path to populate the tables
+		}else{
+			$.each(listData, function(index, value) {
+				html += "<tr><td>" + value.qData.title + "</td><td>" + value.qInfo.qId + "</td></tr>";
+			});
+		}
 
 		//close the table body after adding the rows
-		html += "</tboy></table>";
+		html += "</tbody></table>";
 
-		//TODO overwrites the first table with the second table - need to be more dynamic
+
 		$('#tables').append(html);
 
 }
