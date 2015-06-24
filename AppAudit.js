@@ -6,6 +6,20 @@
 /*
  *    Fill in host and port for Qlik engine
  */
+
+
+//spliced helper function- same as splice, returns mutated array instead of elements removed from array
+Array.prototype.spliced = function() {
+
+  // Returns the array of values deleted from array.
+  Array.prototype.splice.apply( this, arguments );
+
+  // Return current (mutated) array reference.
+  return( this );
+
+};
+
+
 var config = {
 	host: window.location.hostname,
 	prefix: "/",
@@ -21,6 +35,8 @@ require( ["js/qlik"], function ( qlik ) {
 		alert( error.message );
 	} );
 
+
+
 	qlik.getAppList(function(list) {
 
 		var appList = $('<select />').attr('id', 'app-list').attr('class', 'form-control');
@@ -28,22 +44,33 @@ require( ["js/qlik"], function ( qlik ) {
 
 		$('#selector-content').append(label).append(appList);
 
+
+
 		//creates initial blank option to be selected first in the dropdown
-		appList.append('<option value=""></option>');
+		appList.append('<option value="" hidden></option>');
+
+
+
+
 
 		//create dropdown options for each item in the applist, using the value attribute as the file name
 		list.forEach(function(value) {
 			appList.append('<option value="' + value.qDocName +'">' + value.qTitle + '</option>');
 		});
 
-		//when select bar changes options, renderAudit is called on the seleted item's value attribute, ultimately pulling info from selectd app
+		//enables the button as soon as something is chosen in the drop down.  Keeps it disabled if dropdown is blank on initial load
 		appList.change(function() {
+			if($('#app-list option:selected').val() !== '') {
+				$('#update-results').attr('disabled', false);
+			}
+		});
+
+		//when select bar changes options, renderAudit is called on the seleted item's value attribute, ultimately pulling info from selectd app
+		$('#update-results').click(function() {
 			//clear out any existing tables
 			$('#tables').empty();
 
 			var selectedApp = $('#app-list option:selected').val();
-			console.log(selectedApp);
-
 			renderAudit(selectedApp);
 		});
 	});
@@ -54,29 +81,38 @@ function renderAudit(selectedApp) {
 		var app = qlik.openApp(selectedApp, config);
 
 		//gets and renders measures table
-		app.getList('MeasureList', function(reply) {
-			//console.log('measure reply');
-			//console.log(reply);
-			tabularize(reply);
-		});
 
-		app.getList('DimensionList', function(reply) {
-			//console.log('the dimension reply: ');
-			console.log(reply);
-			tabularize(reply);
-		});
+		if($('#measures-checkbox').is(':checked')){
+			app.getList('MeasureList', function(reply) {
+				//console.log('measure reply');
+				//console.log(reply);
+				tabularize(reply);
+			});
+		}
 
-		app.getList('BookmarkList', function(reply) {
-			//console.log('the dimension reply: ');
-			console.log(reply);
-			tabularize(reply);
-		});
+		if($('#dimensions-checkbox').is(':checked')){
+			app.getList('DimensionList', function(reply) {
+				//console.log('the dimension reply: ');
+				console.log(reply);
+				tabularize(reply);
+			});
+		}
 
-		app.getList('FieldList', function(reply) {
-			//console.log('the dimension reply: ');
-			console.log(reply);
-			tabularize(reply);
-		});
+		if($('#bookmarks-checkbox').is(':checked')){
+			app.getList('BookmarkList', function(reply) {
+				//console.log('the dimension reply: ');
+				console.log(reply);
+				tabularize(reply);
+			});
+		}
+
+		if($('#fields-checkbox').is(':checked')){
+			app.getList('FieldList', function(reply) {
+				//console.log('the dimension reply: ');
+				console.log(reply);
+				tabularize(reply);
+			});
+		}
 }
 
 //accepts an array of objects and creates a table displaying measure name and id
@@ -94,17 +130,12 @@ function tabularize(list) {
 
 		//sets the appropriate header for first column since FieldList does not have qInfo.qType
 		if(listType !== "FieldList") {
+
+			//this if check is necessary to remove the word List from the header if the dataset is empty
 			if(listData.length === 0) {
-
-				//TODO find another way to remove the last four items from the array, splice was acting weird
 				var tempHeader = listType.split('');
-				tempHeader.pop();
-				tempHeader.pop();
-				tempHeader.pop();
-				tempHeader.pop();
-				tempHeader = tempHeader.join('');
-
-				firstHeader = tempHeader;
+				tempHeader = tempHeader.spliced(tempHeader.length - 4, 4);
+				firstHeader = tempHeader.join('');
 			}
 			else firstHeader = listData[0].qInfo.qType;
 		}
