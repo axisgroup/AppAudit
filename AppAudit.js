@@ -71,6 +71,13 @@ require( ["js/qlik"], function ( qlik ) {
 function renderAudit(selectedApp) {
 		var app = qlik.openApp(selectedApp, config);
 
+		if($('#sheets-checkbox').is(':checked')){
+			app.getAppObjectList(function(reply) {
+				console.log(reply);
+				tabularizeSheets(reply);
+			});
+		}
+
 		if($('#measures-checkbox').is(':checked')){
 			app.getList('MeasureList', function(reply) {
 				tabularize(reply);
@@ -94,6 +101,8 @@ function renderAudit(selectedApp) {
 				tabularize(reply);
 			});
 		}
+
+
 }
 
 //accepts an array of objects and creates a table displaying measure name and id
@@ -153,7 +162,31 @@ function tabularize(list) {
 
 		$('#tables').append(html);
 
-}
+	}
+
+	function tabularizeSheets(list) {
+		//gets the array of objects - each object represents a sheet
+		var sheets = list.qAppObjectList.qItems;
+		var html = '';
+
+		//adds the table header row
+		html += '<table class="col-lg-3 col-md-6 col-xs-12 table table-striped"><thead><tr><th>SHEET</th><th>ID</th></tr></thead>';
+
+		//start the table body object
+		html += "<tbody>";
+
+		$.each(sheets, function(index, sheet) {
+			html+= "<tr><td>" + sheet.qMeta.title + "</td><td>" + sheet.qInfo.qId + "</td></tr>";
+		});
+
+		//close out table body and start table footer
+		html += "</tbody><tfoot>";
+
+		//create the footer row showing the the total sheets
+		html += '<tr><td><b>TOTAL</b></td><td>' + sheets.length + '</td></tr></tfoot></table>';
+
+		$('#tables').append(html);
+	}
 
 
 });
