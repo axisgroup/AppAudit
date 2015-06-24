@@ -35,8 +35,6 @@ require( ["js/qlik"], function ( qlik ) {
 		alert( error.message );
 	} );
 
-
-
 	qlik.getAppList(function(list) {
 
 		var appList = $('<select />').attr('id', 'app-list').attr('class', 'form-control');
@@ -44,14 +42,8 @@ require( ["js/qlik"], function ( qlik ) {
 
 		$('#selector-content').append(label).append(appList);
 
-
-
 		//creates initial blank option to be selected first in the dropdown
 		appList.append('<option value="" hidden></option>');
-
-
-
-
 
 		//create dropdown options for each item in the applist, using the value attribute as the file name
 		list.forEach(function(value) {
@@ -75,41 +67,30 @@ require( ["js/qlik"], function ( qlik ) {
 		});
 	});
 
-
 //takes in an app name ie hockey.qvf and uses it to open the app.  creates array of measures and array of dimensions
 function renderAudit(selectedApp) {
 		var app = qlik.openApp(selectedApp, config);
 
-		//gets and renders measures table
-
 		if($('#measures-checkbox').is(':checked')){
 			app.getList('MeasureList', function(reply) {
-				//console.log('measure reply');
-				//console.log(reply);
 				tabularize(reply);
 			});
 		}
 
 		if($('#dimensions-checkbox').is(':checked')){
 			app.getList('DimensionList', function(reply) {
-				//console.log('the dimension reply: ');
-				console.log(reply);
 				tabularize(reply);
 			});
 		}
 
 		if($('#bookmarks-checkbox').is(':checked')){
 			app.getList('BookmarkList', function(reply) {
-				//console.log('the dimension reply: ');
-				console.log(reply);
 				tabularize(reply);
 			});
 		}
 
 		if($('#fields-checkbox').is(':checked')){
 			app.getList('FieldList', function(reply) {
-				//console.log('the dimension reply: ');
-				console.log(reply);
 				tabularize(reply);
 			});
 		}
