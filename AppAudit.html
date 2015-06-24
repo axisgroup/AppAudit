@@ -20,13 +20,26 @@
     <script src="/resources/assets/external/requirejs/require.js"></script>
     <script src="./bootstrap/bootstrap.min.js"></script>
     <script src="AppAudit.js"></script>
-    
+
 </head>
 <body style="overflow:auto">
 
   <div class="container">
     <div class="row">
-      <div id='selector-content'></div>
+      <div id="selector-content"></div>
+
+
+        <label for="checkbox-group">Show me: </label>
+        <div id="checkbox-group">
+          <label class="checkbox-inline"><input type="checkbox" id="measures-checkbox" value="measures">Measures</label>
+          <label class="checkbox-inline"><input type="checkbox" id="dimensions-checkbox" value="dimensions">Dimensions</label>
+          <label class="checkbox-inline"><input type="checkbox" id="bookmarks-checkbox" value="bookmarks">Bookmarks</label>
+          <label class="checkbox-inline"><input type="checkbox" id="fields-checkbox" value="fields">Fields</label>
+          <button class="btn btn-primary pull-right" id="update-results" disabled>Update Results</button>
+        </div>
+
+
+
     </div>
   </div>
 

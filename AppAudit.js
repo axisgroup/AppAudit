@@ -6,6 +6,20 @@
 /*
  *    Fill in host and port for Qlik engine
  */
+
+
+//spliced helper function- same as splice, returns mutated array instead of elements removed from array
+Array.prototype.spliced = function() {
+
+  // Returns the array of values deleted from array.
+  Array.prototype.splice.apply( this, arguments );
+
+  // Return current (mutated) array reference.
+  return( this );
+
+};
+
+
 var config = {
 	host: window.location.hostname,
 	prefix: "/",
@@ -21,6 +35,8 @@ require( ["js/qlik"], function ( qlik ) {
 		alert( error.message );
 	} );
 
+
+
 	qlik.getAppList(function(list) {
 
 		var appList = $('<select />').attr('id', 'app-list').attr('class', 'form-control');
@@ -28,22 +44,33 @@ require( ["js/qlik"], function ( qlik ) {
 
 		$('#selector-content').append(label).append(appList);
 
+
+
 		//creates initial blank option to be selected first in the dropdown
-		appList.append('<option value=""></option>');
-		
+		appList.append('<option value="" hidden></option>');
+
+
+
+
+
 		//create dropdown options for each item in the applist, using the value attribute as the file name
 		list.forEach(function(value) {
 			appList.append('<option value="' + value.qDocName +'">' + value.qTitle + '</option>');
 		});
 
-		//when select bar changes options, renderAudit is called on the seleted item's value attribute, ultimately pulling info from selectd app
+		//enables the button as soon as something is chosen in the drop down.  Keeps it disabled if dropdown is blank on initial load
 		appList.change(function() {
+			if($('#app-list option:selected').val() !== '') {
+				$('#update-results').attr('disabled', false);
+			}
+		});
+
+		//when select bar changes options, renderAudit is called on the seleted item's value attribute, ultimately pulling info from selectd app
+		$('#update-results').click(function() {
 			//clear out any existing tables
 			$('#tables').empty();
 
 			var selectedApp = $('#app-list option:selected').val();
-			console.log(selectedApp);
-
 			renderAudit(selectedApp);
 		});
 	});
@@ -54,42 +81,95 @@ function renderAudit(selectedApp) {
 		var app = qlik.openApp(selectedApp, config);
 
 		//gets and renders measures table
-		app.getList('MeasureList', function(reply) {
-			//console.log('measure reply');
-			//console.log(reply);
-			tabularize(reply.qMeasureList.qItems);
-		});
 
-		app.getList('DimensionList', function(reply) {
-			//console.log('the dimension reply: ');
-			//console.log(reply);
-			tabularize(reply.qDimensionList.qItems);
-		});
+		if($('#measures-checkbox').is(':checked')){
+			app.getList('MeasureList', function(reply) {
+				//console.log('measure reply');
+				//console.log(reply);
+				tabularize(reply);
+			});
+		}
 
+		if($('#dimensions-checkbox').is(':checked')){
+			app.getList('DimensionList', function(reply) {
+				//console.log('the dimension reply: ');
+				console.log(reply);
+				tabularize(reply);
+			});
+		}
+
+		if($('#bookmarks-checkbox').is(':checked')){
+			app.getList('BookmarkList', function(reply) {
+				//console.log('the dimension reply: ');
+				console.log(reply);
+				tabularize(reply);
+			});
+		}
+
+		if($('#fields-checkbox').is(':checked')){
+			app.getList('FieldList', function(reply) {
+				//console.log('the dimension reply: ');
+				console.log(reply);
+				tabularize(reply);
+			});
+		}
 }
 
 //accepts an array of objects and creates a table displaying measure name and id
 function tabularize(list) {
-		var html = '';
-		//var table = $('#tables').append('<table />').attr('class', 'table table-striped');
+		//get the type of list
+		var listType = list.qInfo.qType;
 
-		html += '<table class="col-lg-3 table table-striped">';
+		//use list type to create variable to hold the data array
+		var listData = list['q' + listType].qItems;
+
+		//allows for setting of the header depending on type of list passed in since FieldList is structured differently
+		var firstHeader;
+
+		var html = '';
+
+		//sets the appropriate header for first column since FieldList does not have qInfo.qType
+		if(listType !== "FieldList") {
+
+			//this if check is necessary to remove the word List from the header if the dataset is empty
+			if(listData.length === 0) {
+				var tempHeader = listType.split('');
+				tempHeader = tempHeader.spliced(tempHeader.length - 4, 4);
+				firstHeader = tempHeader.join('');
+			}
+			else firstHeader = listData[0].qInfo.qType;
+		}
+		else firstHeader = "Field";
+
+		html += '<table class="col-lg-3 col-md-6 col-xs-12 table table-striped">';
 
 		//add the header to the html variable with header labels
-		html += "<thead><tr><th>" + list[0].qInfo.qType.toUpperCase() + "</th><th>ID</th></tr></thead>";
+		html += "<thead><tr><th>" + firstHeader.toUpperCase() + "</th><th>ID</th></tr></thead>";
 
 		//add the table body
 		html += "<tbody>";
 
 		//iterate over array, and populate the table
-		$.each(list, function(index, value) {
-			html += "<tr><td>" + value.qData.title + "</td><td>" + value.qInfo.qId + "</td></tr>";
-		});
+		if(listData.length === 0){
+			html += "<tr><td>Sorry, no data of this type is present in the application</td></tr>";
+		}
+
+		//different properties need to be called on the field list object than the others
+		if(listType === "FieldList"){
+			$.each(listData, function(index, value) {
+				html += "<tr><td>" + value.qName + "</td><td>" + "N/A" + "</td></tr>";
+			});
+		//Since field list is different, everything else will go down this path to populate the tables
+		}else{
+			$.each(listData, function(index, value) {
+				html += "<tr><td>" + value.qData.title + "</td><td>" + value.qInfo.qId + "</td></tr>";
+			});
+		}
 
 		//close the table body after adding the rows
-		html += "</tboy></table>";
+		html += "</tbody></table>";
 
-		//TODO overwrites the first table with the second table - need to be more dynamic
+
 		$('#tables').append(html);
 
 }
