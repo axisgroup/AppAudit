@@ -167,23 +167,30 @@ function tabularize(list) {
 	function tabularizeSheets(list) {
 		//gets the array of objects - each object represents a sheet
 		var sheets = list.qAppObjectList.qItems;
+    var totalObjects = 0;
 		var html = '';
 
 		//adds the table header row
-		html += '<table class="col-lg-3 col-md-6 col-xs-12 table table-striped"><thead><tr><th>SHEET</th><th>ID</th></tr></thead>';
+		html += '<table class="col-lg-3 col-md-6 col-xs-12 table table-striped">';
 
 		//start the table body object
 		html += "<tbody>";
 
+    //nexted each loops go through each sheet, then each object in the sheet to create the table
 		$.each(sheets, function(index, sheet) {
-			html+= "<tr><td>" + sheet.qMeta.title + "</td><td>" + sheet.qInfo.qId + "</td></tr>";
+      html += '<tr><th colspan="2" style="padding-top:5px;"><b>Sheet</b> - ' + sheet.qMeta.title + '</th></tr>' + '<tr><th>Type</th><th>ID</th></tr>';
+
+      $.each(sheet.qData.cells, function(index, object) {
+        html += '<tr><td>' + object.type + '</td><td>' + object.name + '</td></tr>';
+        totalObjects++;
+      });
 		});
 
 		//close out table body and start table footer
-		html += "</tbody><tfoot>";
+		html += "</tbody>";
 
-		//create the footer row showing the the total sheets
-		html += '<tr><td><b>TOTAL</b></td><td>' + sheets.length + '</td></tr></tfoot></table>';
+		//create the footer row showing the the total objects
+		html += '<tr><td><b>TOTAL OBJECTS</b></td><td align="right">' + totalObjects + '</td></tr></tfoot></table>';
 
 		$('#tables').append(html);
 	}
