@@ -65,7 +65,7 @@ require( ["js/qlik"], function ( qlik ) {
 			var selectedApp = $('#app-list option:selected').val();
 			renderAudit(selectedApp);
 		});
-	});
+	},config);
 
 //takes in an app name ie hockey.qvf and uses it to open the app.  creates array of measures and array of dimensions
 function renderAudit(selectedApp) {
