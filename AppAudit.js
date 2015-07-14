@@ -35,37 +35,48 @@ require( ["js/qlik"], function ( qlik ) {
 		alert( error.message );
 	} );
 
-	qlik.getAppList(function(list) {
+	global = qlik.getGlobal(config);
 
-		var appList = $('<select />').attr('id', 'app-list').attr('class', 'form-control');
-		var label = $('<label>').attr('for', 'selector-content').text('Select App');
+	var isPersonalMode;
 
-		$('#selector-content').append(label).append(appList);
+	global.isPersonalMode(function(reply) {
+		isPersonalMode = reply.qReturn;
+		qlik.getAppList(function(list) {
 
-		//creates initial blank option to be selected first in the dropdown
-		appList.append('<option value="" hidden></option>');
 
-		//create dropdown options for each item in the applist, using the value attribute as the file name
-		list.forEach(function(value) {
-			appList.append('<option value="' + value.qDocName +'">' + value.qTitle + '</option>');
-		});
+			var appList = $('<select />').attr('id', 'app-list').attr('class', 'form-control');
+			var label = $('<label>').attr('for', 'selector-content').text('Select App');
 
-		//enables the button as soon as something is chosen in the drop down.  Keeps it disabled if dropdown is blank on initial load
-		appList.change(function() {
-			if($('#app-list option:selected').val() !== '') {
-				$('#update-results').attr('disabled', false);
-			}
-		});
+			$('#selector-content').append(label).append(appList);
 
-		//when select bar changes options, renderAudit is called on the seleted item's value attribute, ultimately pulling info from selectd app
-		$('#update-results').click(function() {
-			//clear out any existing tables
-			$('#tables').empty();
+			//creates initial blank option to be selected first in the dropdown
+			appList.append('<option value="" hidden></option>');
 
-			var selectedApp = $('#app-list option:selected').val();
-			renderAudit(selectedApp);
-		});
-	},config);
+			//create dropdown options for each item in the applist, using the value attribute as the file name
+			list.forEach(function(value) {
+				appList.append('<option value="' + value.qDocName +'" guid="' + value.qDocId + '">' + value.qTitle + '</option>');
+			});
+
+			//enables the button as soon as something is chosen in the drop down.  Keeps it disabled if dropdown is blank on initial load
+			appList.change(function() {
+				if($('#app-list option:selected').val() !== '') {
+					$('#update-results').attr('disabled', false);
+				}
+			});
+
+			//when select bar changes options, renderAudit is called on the seleted item's value attribute, ultimately pulling info from selectd app
+			$('#update-results').click(function() {
+				//clear out any existing tables
+				$('#tables').empty();
+
+				var selectedApp = isPersonalMode ? $('#app-list option:selected').val() : $('#app-list option:selected').attr('guid');
+				renderAudit(selectedApp);
+			});
+		},config);
+
+	});
+
+	
 
 //takes in an app name ie hockey.qvf and uses it to open the app.  creates array of measures and array of dimensions
 function renderAudit(selectedApp) {
