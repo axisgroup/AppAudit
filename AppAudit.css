@@ -6,3 +6,8 @@ div#tables table {
 select#app-list {
   margin-right: 0;
 }
+
+div#tables tr > td {
+  -webkit-user-select: text !important;
+  user-select:text !important;
+}
